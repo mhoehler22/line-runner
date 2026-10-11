@@ -70,7 +70,7 @@
     return out;
   }
 
-  // Is the punctuation at idx the period of a title — "MRS." in "MRS. MEDLOCK"?
+  // Is the punctuation at idx the period of a title — "MRS." in "MRS. HOLLOWAY"?
   function afterTitle(line, idx) {
     return /(?:^|[\s(])(?:MR|MRS|MS|DR|ST|Mr|Mrs|Ms|Dr|St)$/.test(line.slice(0, idx));
   }
@@ -175,7 +175,7 @@
     if (/^[\-–—_=*•·~.\s]+$/.test(line)) return { page: null };
     if (RE_LEADER.test(line)) return { page: null };
     const sp = RE_INLINE.exec(line);
-    const isSpeech = sp && (sp[3] === '.' || sp[3] === ':') && sp[4];   // "DICKON. Number 7"
+    const isSpeech = sp && (sp[3] === '.' || sp[3] === ':') && sp[4];   // "OTIS. Number 7"
     if (!isSpeech) {
       let num = null, body = null;
       if ((m = /^(?:page\s*)?(\d{1,3})\s+(.+)$/i.exec(line))) { num = +m[1]; body = m[2]; }
