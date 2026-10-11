@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Line Runner</title>
+<meta name="description" content="Learn your lines. A private scene partner that reads your cues aloud and drills the lines you don't know yet.">
+<meta name="theme-color" content="#2e6a4e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Lines">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="in">
+    <div class="brand">
+      <svg viewBox="0 0 64 64" aria-hidden="true"><rect width="64" height="64" rx="14" fill="#2e6a4e"/><path d="M18 14h22l8 8v28H18z" fill="#fbf7ec"/><path d="M40 14v8h8" fill="#d8cfb8"/><rect x="23" y="27" width="20" height="3" rx="1.5" fill="#2e6a4e"/><rect x="23" y="34" width="14" height="3" rx="1.5" fill="#9cc7a6"/><rect x="23" y="41" width="17" height="3" rx="1.5" fill="#9cc7a6"/></svg>
+      Line Runner
+    </div>
+    <span class="chip" id="chip" hidden></span>
+  </div>
+</header>
+
+<main id="view" aria-live="polite"></main>
+
+<nav class="tabs" aria-label="Sections">
+  <a href="#/home" data-r="home"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Practice</a>
+  <a href="#/script" data-r="script"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8z"/><path d="M14 3v5h5M9 13h6M9 17h4"/></svg>Script</a>
+  <a href="#/settings" data-r="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg>Settings</a>
+  <a href="#/help" data-r="help"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .9-1 1.6v.6M12 17h0"/></svg>Help</a>
+</nav>
+
+<div id="sheet" hidden></div>
+<div id="practice" class="practice" hidden></div>
+<div id="toast" class="toast" role="status"></div>
+
+<script src="parser.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

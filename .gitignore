@@ -1,0 +1,5 @@
+# Never commit script text. Real scripts belong outside this folder (../private/).
+*.local.*
+private/
+.DS_Store
+Thumbs.db
