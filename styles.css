@@ -147,7 +147,9 @@ input[type=range] { width: 100%; accent-color: var(--accent); }
 
 /* script preview */
 .preview { font-family: var(--script); font-size: 17px; line-height: 1.5; }
-.preview h3 { font-family: var(--ui); font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 22px 0 8px; }
+.preview h3 { font-family: var(--ui); font-size: 14px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); margin: 0; flex: 1; }
+.pvh { display: flex; align-items: center; gap: 8px; margin: 22px 0 8px; border-bottom: 1px solid var(--line); padding-bottom: 4px; }
+.pvh .btn { min-height: 32px; padding: 4px 8px; font-size: 13px; color: var(--muted); }
 .pv { padding: 6px 10px; border-radius: 8px; margin: 2px -10px; position: relative; }
 .pv.mine { background: var(--mine); }
 .pv.warn { outline: 2px dashed var(--shaky); outline-offset: -2px; }

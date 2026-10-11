@@ -370,7 +370,7 @@
       ${p ? `<section class="card">
         <div class="row"><h3 class="spacer" style="margin:0">Read through</h3>
           <button class="btn" data-act="edit">Edit text</button></div>
-        <p class="muted small">Your lines are highlighted. Check that each line belongs to the right person and that stage directions are in ( ).</p>
+        <p class="muted small">Your lines are highlighted. Check that each line belongs to the right person and that stage directions are in ( ). If a title page, cast list, music list or notes got in, use <b>Remove section</b>.</p>
         <div id="pvwrap" class="preview">${previewHTML()}</div>
       </section>` : ''}`;
   }
@@ -379,7 +379,9 @@
     const warnAt = new Set(D.warnings.map(w => w.scene + ':' + w.block));
     let page = null;
     return D.parsed.scenes.map((s, si) => {
-      let h = s.title ? '<h3>' + esc(s.title) + '</h3>' : '';
+      const n = s.blocks.filter(b => b.type === 'speech').length;
+      let h = '<div class="pvh"><h3>' + (s.title ? esc(s.title) : '<i>Before the first heading</i>') + '</h3>' +
+        '<button class="btn small ghost" data-act="removeSection" data-si="' + si + '" data-n="' + n + '">Remove section</button></div>';
       h += s.blocks.map((b, bi) => {
         let pg = '';
         if (b.page != null && b.page !== page) { page = b.page; pg = '<div class="pg">page ' + b.page + '</div>'; }
@@ -467,11 +469,12 @@
       <section class="card help">
         <h2>Getting your script in</h2>
         <ol>
-          <li><b>Photograph one page at a time</b>, phone held upright, in good light, with the page flat. Start at the first page of the play — skip the cast list.</li>
+          <li><b>Photograph the pages</b> in good light, one page or a two-page spread per photo. Start at the first page of the play — skip the title page, cast list, and any notes or music lists.</li>
           <li>Open the photo. Press and hold on the words until they highlight, drag the handles if needed, then tap <b>Select All</b> → <b>Copy</b>.</li>
           <li>Here, go to <b>Script → Add pages</b>, paste, and tap <b>Add to script</b>. Keep going in page order. You can paste several pages at once.</li>
-          <li>Pasted the wrong page? <b>Undo last add</b>.</li>
+          <li>Pasted the wrong page? <b>Undo last add</b>. Front pages or notes got in? <b>Remove section</b> in the read-through.</li>
         </ol>
+        <p><b>Lots of photos?</b> An iPhone Shortcut can copy the text from all of them at once. Put the photos in an album, then build a Shortcut: <b>Find Photos</b> (album is yours, sorted by date taken) → <b>Repeat with Each</b> → <b>Extract Text from Image</b> → <b>Combine Text</b> (new lines) → <b>Copy to Clipboard</b>. Run it, then paste everything in one go.</p>
         <h3>Checking it</h3>
         <p>Read through on the Script tab. Your lines are highlighted. Look at any <b>Check</b> spots first. Pencil notes in your script can sneak in as words; delete them with <b>Edit text</b>. In Edit text, each speech is one line: <b>MARY: what she says</b>, and stage directions go in ( ).</p>
 
@@ -1191,6 +1194,19 @@ WREN: I am. And when I do, I won't tell you.
     cancelEdit() { render(true); },
     saveEdit,
     showBlock(el) { showBlock(el.dataset.pos); },
+    removeSection(el) {
+      const si = Number(el.dataset.si);
+      const scene = D.parsed && D.parsed.scenes[si];
+      if (!scene) return;
+      const name = scene.title || 'the part before the first heading';
+      if (!confirm('Remove ' + name + ' (' + plural(Number(el.dataset.n), 'line') + ')? You can undo this.')) return;
+      S.undo = S.script;
+      const kept = { scenes: D.parsed.scenes.filter((s, i) => i !== si) };
+      S.script = P.serialize(kept);
+      S.lastDropped = [];
+      save(); derive(); render(true);
+      toast('Section removed.');
+    },
     testVoice(el) { TTS.unlock(); TTS.cancel(); TTS.say('Good morning. This is how I sound.', el.dataset.name); },
     copyScript,
     exportBackup,

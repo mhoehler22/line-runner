@@ -92,8 +92,34 @@ test('practice sections are labelled with page ranges', () => {
   }
   const pr = P.buildPractice(P.parse(raw), 'WREN');
   assert.ok(pr.chunks.length >= 2);
-  assert.match(pr.chunks[0].title, /^ACT I · pp\. 1–4$/, 'first cut lands on the scene change');
+  assert.match(pr.chunks[0].title, /^Act I · pp\. 1–4$/, 'first cut lands on the scene change');
   assert.ok(pr.lines.every(l => typeof l.page === 'number'));
+});
+
+test('misread running heads ("Act Ill", "Act I!") don’t start new sections', () => {
+  const raw = [
+    'ACT ONE', 'WREN. One.', 'Page 2', 'Act I', 'KEEPER. Two.',
+    'ACT TWO', 'WREN. Three.',
+    'Page 4', 'Act I', 'KEEPER. Four.',              // "Act II" misread as "Act I"
+    'Act I!', 'Page 5', 'WREN. Five.',               // ...and as "Act I!"
+    'ACT THREE', 'KEEPER. Six.',
+    'Page 7', 'THE LIGHTHOUSE KEY', 'Act Ill', 'WREN. Seven.',
+    'Act IIl', 'THE LIGHTHOUSE KEY', 'Page 8', 'KEEPER. Eight.'
+  ].join('\n');
+  const parsed = P.parse(raw);
+  assert.deepEqual(parsed.scenes.map(s => s.title), ['ACT ONE', 'ACT TWO', 'ACT THREE']);
+  assert.equal(speeches(parsed).length, 8);
+});
+
+test('a music cue list ("#1 Opening") is not read as headings', () => {
+  const parsed = P.parse('#1 Opening Music\n#2 Wren’s Theme\nACT ONE\nWREN. Hello.');
+  assert.deepEqual(parsed.scenes.map(s => s.title).filter(Boolean), ['ACT ONE']);
+});
+
+test('section names carry the act, in title case', () => {
+  const parsed = P.parse('ACT ONE\nWREN. A.\nSCENE TWO\nWREN. B.\nACT TWO\nWREN. C.\nSCENE TWO\nWREN. D.');
+  const pr = P.buildPractice(parsed, 'WREN');
+  assert.deepEqual(pr.chunks.map(c => c.title), ['Act One', 'Act One · Scene Two', 'Act Two', 'Act Two · Scene Two']);
 });
 
 test('cast-list leaders on the front pages are ignored', () => {

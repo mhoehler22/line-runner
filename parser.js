@@ -34,7 +34,8 @@
     "ELEVEN|TWELVE|THIRTEEN|FOURTEEN|FIFTEEN|SIXTEEN|SEVENTEEN|EIGHTEEN|NINETEEN|TWENTY)";
   const RE_HEADING = new RegExp("^(ACT|SCENE)\\s+" + NUMWORD + "\\b(.*)$", "i");
   const RE_HEADING_WORD = /^(PROLOGUE|EPILOGUE|ENTR'?ACTE)\s*[.:]?$/i;
-  const RE_CANON_HEADING = /^#\s*(.+)$/;
+  // "# Act Two" — but not "#1 Mary's Travels" from a music cue list.
+  const RE_CANON_HEADING = /^#\s+(?!\d)(\S.*)$/;
 
   // All-caps words that start lines but are never characters.
   const STOP = new Set(('ACT SCENE END BLACKOUT CURTAIN INTERMISSION LIGHTS FADE MUSIC SOUND ' +
@@ -155,10 +156,12 @@
 
   const ROMAN = { ONE: 'I', TWO: 'II', THREE: 'III', FOUR: 'IV', FIVE: 'V', 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V' };
   // "ACT ONE", "Act I", "ACT 1." -> "ACT I"; '' when the heading is not an act-only heading.
+  // Copes with OCR'd numerals: "Act Ill", "Act IIl", "Act I!" (an I read as l, 1, ! or |).
   function actKey(title) {
-    const m = /^ACT\s+([A-Z0-9]+)[.:]?$/i.exec(title.trim());
+    const m = /^ACT\s+([IVXL1!|]+|ONE|TWO|THREE|FOUR|FIVE)\s*[.:!]?$/i.exec(title.trim());
     if (!m) return '';
-    const n = m[1].toUpperCase();
+    let n = m[1].toUpperCase();
+    if (!ROMAN[n]) n = n.replace(/[L1!|]/g, 'I');
     return 'ACT ' + (ROMAN[n] || n);
   }
 
@@ -412,7 +415,22 @@
       append(last(), line);
     }
 
-    for (let line of lines) {
+    // Is line li part of a page's running head — next to a page number (perhaps with the
+    // play's title line in between)?
+    const nearPage = li => {
+      for (const step of [-1, 1]) {
+        for (let k = 1; k <= 2; k++) {
+          const x = lines[li + step * k];
+          if (x === undefined) break;
+          if (typeof x !== 'string') return true;
+          if (!(isAllCaps(x) && !/[.!?]$/.test(x))) break;     // only a title line may sit between
+        }
+      }
+      return false;
+    };
+
+    for (let li = 0; li < lines.length; li++) {
+      let line = lines[li];
       if (typeof line !== 'string') { page = line.page; continue; }
       if (recv) {
         // Directions don't nest: a "(" while one is still open means the OCR lost a ")".
@@ -457,12 +475,17 @@
         if (h.title) {
           // The act name repeats in every page's running head ("Act I", "Act I THE LIGHTHOUSE
           // KEY"); only the first one is a heading. "Act I, Scene 2" is still new.
-          const m = /^(ACT\s+[A-Z0-9]+)[.,:;]?\s*(.*)$/i.exec(h.title);
+          const m = /^(ACT\s+[A-Z0-9!|]+)[.,:;]?\s*(.*)$/i.exec(h.title);
           if (m) {
             const act = actKey(m[1]);
             const rest = m[2].replace(/^[,—–\-:;.\s]+/, '');
             if (act === lastAct && !/^SCENE\b/i.test(rest)) continue;
-            lastAct = act;
+            // A bare "Act II" beside a page number is a running head, even when the OCR misreads
+            // its numeral and it no longer matches the act we're in. Real act headings are set
+            // in capitals ("ACT II") or spelled out ("Act Two"); the first act heading is trusted.
+            if (act && lastAct && !RE_CANON_HEADING.test(line) && nearPage(li) &&
+                h.title !== h.title.toUpperCase() && !/^ACT\s+(ONE|TWO|THREE|FOUR|FIVE)\b/i.test(h.title)) continue;
+            lastAct = act || actKey(m[1].replace(/[.,:;!|]+$/, ''));
           }
           blocks.push({ type: 'scene', title: h.title });
         }
@@ -639,6 +662,13 @@
     return a === b ? 'p. ' + a : 'pp. ' + a + '–' + b;
   }
 
+  // "ACT TWO — SCENE THREE" -> "Act Two — Scene Three"; Roman numerals stay capitals.
+  function titleCase(s) {
+    if (s !== s.toUpperCase()) return s;
+    return s.toLowerCase().replace(/\b([a-z])([a-z']*)/g, (w, a, b) =>
+      /^[ivxl]+$/.test(w) ? w.toUpperCase() : a.toUpperCase() + b);
+  }
+
   function buildPractice(parsed, me, opts) {
     opts = opts || {};
     const lines = [];
@@ -646,10 +676,15 @@
     const seen = new Map();
     if (!parsed) return { lines, chunks, byKey: new Map() };
 
+    let act = '';
     parsed.scenes.forEach((scene, si) => {
       const parts = sections(scene.blocks);
+      // Scene titles repeat in every act, so name sections "Act Two · Scene Three".
+      let label = scene.title ? titleCase(scene.title) : '';
+      if (/^act\b/i.test(label)) act = label.split(/\s+[—–-]\s+/)[0];
+      else if (/^scene\b/i.test(label) && act) label = act + ' · ' + label;
       parts.forEach(([from, to], pi) => {
-        const base = scene.title || (parsed.scenes.length > 1 && si === 0 ? 'Opening' : 'Script');
+        const base = label || (parsed.scenes.length > 1 && si === 0 ? 'Opening' : 'Script');
         const pages = pageRange(scene.blocks, from, to);
         const title = parts.length > 1 ? base + ' · ' + (pages || 'Part ' + (pi + 1)) : base;
         const chunk = { title, pages, scene: si, from, to, keys: [] };
