@@ -1,5 +1,9 @@
 # Changelog
 
+## 2026-10-11 — `e9bd489` Documentation
+Added `docs/` (architecture, parser rules, decisions, changelog, roadmap), linked from the README.
+Every code comment and help example now uses the test play's names. Service worker cache `v3`.
+
 ## 2026-10-11 — `6c527c1` Use the test play's names in code comments
 Two code comments used character names from the first real script as examples. They were
 replaced with names from the test fixtures (see DECISIONS D13).
