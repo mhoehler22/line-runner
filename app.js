@@ -476,7 +476,7 @@
         </ol>
         <p><b>Lots of photos?</b> An iPhone Shortcut can copy the text from all of them at once. Put the photos in an album, then build a Shortcut: <b>Find Photos</b> (album is yours, sorted by date taken) → <b>Repeat with Each</b> → <b>Extract Text from Image</b> → <b>Combine Text</b> (new lines) → <b>Copy to Clipboard</b>. Run it, then paste everything in one go.</p>
         <h3>Checking it</h3>
-        <p>Read through on the Script tab. Your lines are highlighted. Look at any <b>Check</b> spots first. Pencil notes in your script can sneak in as words; delete them with <b>Edit text</b>. In Edit text, each speech is one line: <b>MARY: what she says</b>, and stage directions go in ( ).</p>
+        <p>Read through on the Script tab. Your lines are highlighted. Look at any <b>Check</b> spots first. Pencil notes in your script can sneak in as words; delete them with <b>Edit text</b>. In Edit text, each speech is one line: <b>NAME: what they say</b>, and stage directions go in ( ).</p>
 
         <h3>Practicing</h3>
         <ul>

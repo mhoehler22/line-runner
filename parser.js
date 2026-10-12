@@ -10,7 +10,7 @@
  * Canonical format, one block per line (parse() also reads this, so clean() is idempotent):
  *   # Act One, Scene 2              scene heading
  *   (She crosses to the window.)    stage direction
- *   MARY: (crossly) I won't.        speech; anything in ( ) is a direction, not spoken
+ *   WREN: (crossly) I won't.        speech; anything in ( ) is a direction, not spoken
  *
  * Runs in the browser (window.LineParser) and in Node (require) for tests.
  */
@@ -34,7 +34,7 @@
     "ELEVEN|TWELVE|THIRTEEN|FOURTEEN|FIFTEEN|SIXTEEN|SEVENTEEN|EIGHTEEN|NINETEEN|TWENTY)";
   const RE_HEADING = new RegExp("^(ACT|SCENE)\\s+" + NUMWORD + "\\b(.*)$", "i");
   const RE_HEADING_WORD = /^(PROLOGUE|EPILOGUE|ENTR'?ACTE)\s*[.:]?$/i;
-  // "# Act Two" — but not "#1 Mary's Travels" from a music cue list.
+  // "# Act Two" — but not "#1 Opening Music" from a music cue list.
   const RE_CANON_HEADING = /^#\s+(?!\d)(\S.*)$/;
 
   // All-caps words that start lines but are never characters.
@@ -260,7 +260,7 @@
   }
 
   // Live Text sometimes runs two short speeches into one line:
-  //   "BOY. Is! (MUSIC IN.) MARY. Isn't!"
+  //   "BOY. Is! (MUSIC IN.) WREN. Isn't!"
   // Split before a known speaker that follows the end of a sentence, outside any ( … ).
   function splitMerged(lines, cast) {
     const names = [...cast.strong].sort((a, b) => b.length - a.length);
@@ -356,7 +356,7 @@
     if (m && cast.names.has(normName(m[1]))) return { name: normName(m[1]), text: join(m[2], m[3]), explicit: true };
     m = RE_NAME_ONLY.exec(line);
     if (m && cast.names.has(normName(m[1]))) return { name: normName(m[1]), text: m[2] || '', explicit: true };
-    // A known name that lost its period to the OCR: "MARY I won't."
+    // A known name that lost its period to the OCR: "WREN I won't."
     const upper = line.replace(/’/g, "'");
     for (const n of cast.byLength) {
       if (!cast.strong.has(n)) continue;
@@ -440,7 +440,7 @@
       }
       if (recv) {
         // Safety valve: a missing ")" must not swallow the rest of the play. Only a
-        // properly punctuated speaker line counts — directions often start "MARY kneels…".
+        // properly punctuated speaker line counts — directions often start "WREN kneels…".
         const sp = matchSpeaker(line, cast);
         if (sp && sp.explicit && cast.strong.has(sp.name) && !line.includes(')')) {
           recv.text += ')';
@@ -496,7 +496,7 @@
       if (sp) {
         const prevSpeech = lastSpeechInScene();
         if (CONTD.test(sp.text) && prevSpeech && prevSpeech.speaker === sp.name) {
-          // "MARY (cont'd)" at the top of a new page.
+          // "WREN (cont'd)" at the top of a new page.
           const rest = sp.text.replace(CONTD, '').trim();
           const b = last();
           if (b !== prevSpeech && b.type === 'direction') {

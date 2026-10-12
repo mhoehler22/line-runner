@@ -1,6 +1,6 @@
 // Line Runner service worker: keeps the app working offline.
 // Network first, so updates show up as soon as there's a connection; cache as the fallback.
-const CACHE = 'line-runner-v2';
+const CACHE = 'line-runner-v3';
 const SHELL = ['./', 'index.html', 'styles.css', 'parser.js', 'app.js', 'manifest.webmanifest',
   'icon.svg', 'icon-180.png', 'icon-192.png', 'icon-512.png'];
 
