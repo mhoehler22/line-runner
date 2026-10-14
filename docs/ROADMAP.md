@@ -31,6 +31,11 @@ committed work. Each says what it would fix.
 - **Run with timing:** pause for the actor's line for roughly its natural length instead of waiting
   for a tap, for performance-speed runs.
 - **Musical numbers:** lyric drills, with entrance cues taken from music cue numbers in directions.
+- **Should a hinted "Got it" count less?** Today it moves a line up a box like an unaided one, so
+  "solid" can include lines that still need the first letters. Option: treat it as Shaky. Decide
+  after the practice record (D14) shows how often hints are used.
+- **Read the practice record:** a small view or script over a backup that answers "after a hinted
+  try, is the next unaided try better?" and "which modes get used?"
 
 ## Devices and data
 - **Optional sync** that keeps D1 intact: an export to the user's own cloud storage, or a sync code

@@ -9,6 +9,7 @@
   const KEY = 'lineRunner:v1';
   const CUE_TAIL = 14;          // words of a long cue read in "cues only" and flashcards
   const SOLID = 3;              // box at which a line counts as solid
+  const LOG_MAX = 10000;        // practice-record entries kept (oldest dropped first)
 
   const DEFAULT_SETTINGS = {
     offBook: '', rate: 1, speakCues: true, showCueText: true, speakMine: false,
@@ -28,6 +29,7 @@
       undo: typeof d.undo === 'string' ? d.undo : null,
       settings: Object.assign({}, DEFAULT_SETTINGS, d.settings || {}),
       progress: d.progress && typeof d.progress === 'object' ? d.progress : {},
+      log: Array.isArray(d.log) ? d.log : [],
       lastDropped: Array.isArray(d.lastDropped) ? d.lastDropped : [],
       tipClosed: !!d.tipClosed
     };
@@ -61,6 +63,13 @@
     const p = S.progress[key];
     if (!p || !p.n) return 'new';
     return p.b >= SOLID ? 'solid' : 'learning';
+  }
+
+  function logSummary() {
+    if (!S.log.length) return 'nothing yet.';
+    const hinted = S.log.filter(e => e.h).length;
+    const since = new Date(S.log[0].t).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+    return plural(S.log.length, 'try', 'tries') + ' since ' + since + ', ' + hinted + ' with a hint.';
   }
 
   function tally(keys) {
@@ -453,6 +462,7 @@
           <button class="btn" data-act="exportBackup" ${S.script ? '' : 'disabled'}>Download backup</button>
           <label class="btn">Restore backup<input type="file" accept=".json,application/json" data-change="importBackup" hidden></label>
         </div>
+        <p class="muted small">Practice record: ${logSummary()}</p>
       </section>
 
       <section class="card">
@@ -502,7 +512,7 @@
           <li>Each device keeps its own copy. Move your script with <b>Settings → Download backup</b>, then <b>Restore backup</b> on the other device (email the file to yourself, or put it in Google Drive). Or copy the script text and paste it into <b>Add pages</b>.</li>
         </ul>
         <h3>Privacy</h3>
-        <p>Your script never leaves this device. There are no accounts, no tracking, and nothing is uploaded. Your script is for your own practice — please don’t share its text.</p>
+        <p>Your script never leaves this device. There are no accounts and nothing is uploaded. The app keeps a record of your practice on this device (which line, how it went, whether you used a hint), and it goes into your backup with your progress. Your script is for your own practice — please don’t share its text.</p>
       </section>`;
   }
 
@@ -522,7 +532,7 @@
     const ta = $('#addText');
     const text = ta.value;
     if (!text.trim()) { toast('Paste a page first.'); ta.focus(); return; }
-    if (S.demo) { S.script = ''; S.me = ''; S.progress = {}; S.demo = false; S.undo = null; derive(); }
+    if (S.demo) { S.script = ''; S.me = ''; S.progress = {}; S.log = []; S.demo = false; S.undo = null; derive(); }
     const beforeLines = speechCount(D.parsed);
     const beforeMine = D.practice.lines.length;
     S.undo = S.script;
@@ -648,7 +658,7 @@ WREN: I am. And when I do, I won't tell you.
     TTS.cancel();
     closeSheet();
     sess = {
-      mode: cfg.mode, title: cfg.title, gen: 0, results: new Map(), attempts: 0,
+      id: Date.now(), mode: cfg.mode, title: cfg.title, gen: 0, results: new Map(), attempts: 0,
       paused: false, cur: null, cfg
     };
     if (cfg.mode === 'run' || cfg.mode === 'cues') {
@@ -716,7 +726,7 @@ WREN: I am. And when I do, I won't tell you.
 
   function controls(btns) {
     $('#controls').innerHTML = btns.map(b =>
-      '<button class="btn ' + (b.cls || '') + '" data-act="' + b.act + '"' + (b.data ? ' data-v="' + b.data + '"' : '') + '>' +
+      '<button class="btn ' + (b.cls || '') + '" data-act="' + b.act + '"' + (b.data !== undefined ? ' data-v="' + b.data + '"' : '') + '>' +
       b.label + (b.key ? ' <kbd>' + b.key + '</kbd>' : '') + '</button>').join('');
   }
 
@@ -890,17 +900,22 @@ WREN: I am. And when I do, I won't tell you.
     if (S.settings.speakMine && TTS.ok) TTS.say(sess.cur.line.spoken, '__me');
   }
 
-  function record(key, g) {
-    if (sess.results.has(key)) return;                 // only a line's first try counts
-    sess.results.set(key, g);
-    const p = S.progress[key] || { b: 0, n: 0, m: 0, t: 0 };
-    if (g === 2) p.b = Math.min(5, p.b + 1);
-    else if (g === 1) p.b = p.b > 1 ? p.b - 1 : p.b;
-    else p.b = 0;
-    p.n++;
-    if (g === 0) p.m++;
-    p.t = Date.now();
-    S.progress[key] = p;
+  function record(key, g, hinted) {
+    // The practice record logs every try, re-drills included.
+    S.log.push({ t: Date.now(), s: sess.id, k: key, m: sess.mode, g, h: hinted ? 1 : 0 });
+    if (S.log.length > LOG_MAX) S.log.splice(0, S.log.length - LOG_MAX);
+    if (!sess.results.has(key)) {                      // only a line's first try changes progress
+      sess.results.set(key, g);
+      const p = S.progress[key] || { b: 0, n: 0, m: 0, t: 0 };
+      if (g === 2) p.b = Math.min(5, p.b + 1);
+      else if (g === 1) p.b = p.b > 1 ? p.b - 1 : p.b;
+      else p.b = 0;
+      p.n++;
+      if (g === 0) p.m++;
+      if (hinted) p.h = (p.h || 0) + 1;
+      p.t = Date.now();
+      S.progress[key] = p;
+    }
     save();
     updateProg();
   }
@@ -909,7 +924,7 @@ WREN: I am. And when I do, I won't tell you.
     if (!sess || !sess.cur || sess.cur.level < 2) return;
     TTS.cancel();
     const line = sess.cur.line;
-    record(line.key, g);
+    record(line.key, g, sess.cur.hinted);
     if (sess.mode === 'run' || sess.mode === 'cues') {
       const n = sess.cur.node;
       if (n) n.classList.add('g-' + g);
@@ -1102,7 +1117,7 @@ WREN: I am. And when I do, I won't tell you.
   // ---------------------------------------------------------------- backup
 
   function exportBackup() {
-    const data = { app: 'line-runner', version: 1, exported: new Date().toISOString(), script: S.script, me: S.me, settings: S.settings, progress: S.progress };
+    const data = { app: 'line-runner', version: 1, exported: new Date().toISOString(), script: S.script, me: S.me, settings: S.settings, progress: S.progress, log: S.log };
     const blob = new Blob([JSON.stringify(data)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -1126,6 +1141,12 @@ WREN: I am. And when I do, I won't tell you.
       // Keep whichever progress record for each line is more recent.
       for (const [k, p] of Object.entries(d.progress || {})) {
         if (!S.progress[k] || (p.t || 0) > (S.progress[k].t || 0)) S.progress[k] = p;
+      }
+      // Practice records from both devices are kept, in time order, without duplicates.
+      if (Array.isArray(d.log) && d.log.length) {
+        const seen = new Set(S.log.map(e => e.t + '|' + e.k));
+        S.log = S.log.concat(d.log.filter(e => e && !seen.has(e.t + '|' + e.k)))
+          .sort((a, b) => a.t - b.t).slice(-LOG_MAX);
       }
       save(); askPersist(); derive(); render();
       toast('Backup restored.');
@@ -1153,8 +1174,8 @@ WREN: I am. And when I do, I won't tell you.
   };
 
   const actions = {
-    demo() { S.script = P.clean(DEMO); S.me = 'WREN'; S.demo = true; S.progress = {}; save(); derive(); render(); },
-    clearDemo() { S.script = ''; S.me = ''; S.demo = false; S.progress = {}; S.undo = null; save(); derive(); render(); },
+    demo() { S.script = P.clean(DEMO); S.me = 'WREN'; S.demo = true; S.progress = {}; S.log = []; save(); derive(); render(); },
+    clearDemo() { S.script = ''; S.me = ''; S.demo = false; S.progress = {}; S.log = []; S.undo = null; save(); derive(); render(); },
     closeTip() { S.tipClosed = true; save(); render(true); },
     quick() {
       startPractice({ mode: 'cards', title: 'Weakest lines', keys: D.practice.lines.map(l => l.key), order: 'weak', size: Number(S.settings.sessionSize) || 20 });
@@ -1210,7 +1231,7 @@ WREN: I am. And when I do, I won't tell you.
     testVoice(el) { TTS.unlock(); TTS.cancel(); TTS.say('Good morning. This is how I sound.', el.dataset.name); },
     copyScript,
     exportBackup,
-    resetProgress() { if (confirm('Reset all progress? Your script stays.')) { S.progress = {}; save(); render(true); toast('Progress reset.'); } },
+    resetProgress() { if (confirm('Reset all progress? Your script stays.')) { S.progress = {}; S.log = []; save(); render(true); toast('Progress reset.'); } },
     eraseAll() {
       if (!confirm('Erase your script, progress and settings from this device?')) return;
       try { localStorage.removeItem(KEY); } catch (e) {}

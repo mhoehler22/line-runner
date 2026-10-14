@@ -52,11 +52,21 @@ One `localStorage` key, `lineRunner:v1`:
     showDirections: true, includeGroup: true, british: true, voiceMap: {}, ignore: "",
     sessionSize: 20, theme: ""
   },
-  progress: { "<lineKey>": { b: 2, n: 5, m: 1, t: 1791755658935 } }
+  progress: { "<lineKey>": { b: 2, n: 5, m: 1, h: 1, t: 1791755658935 } },
+  log: [ { t: 1791755658935, s: 1791755600000, k: "<lineKey>", m: "cards", g: 2, h: 1 } ]
 }
 ```
 
-Progress per line: `b` = Leitner box 0–5, `n` = attempts, `m` = misses, `t` = last practised.
+Progress per line: `b` = Leitner box 0–5, `n` = attempts, `m` = misses, `h` = attempts that used
+a hint (absent until the first one), `t` = last practised. Like `b`, these count only a line's first
+try in a session.
+
+**Practice record (`log`):** one entry per graded try, re-drills included: `t` = time, `s` =
+session (its start time), `k` = line key, `m` = mode, `g` = grade 0–2, `h` = 1 if the Hint button
+was used before grading (always 0 in type mode, which has no hint). The newest 10,000 entries are
+kept. It holds line keys only, never text. It exists to answer questions such as "does a hint
+help?" and "which modes get used?" (DECISIONS D14). Settings shows a one-line count; Reset
+progress, loading the demo, and clearing the demo empty it.
 
 **Line keys** are an FNV-1a hash of `speaker | spoken text (lowercased, letters and digits only) #
 occurrence`. Re-cleaning the script never loses progress. Editing a line's words gives it a new
@@ -143,9 +153,10 @@ Browser `speechSynthesis` only, with no audio files.
 ## Moving between devices
 
 Every device keeps its own copy. **Download backup** writes
-`{ app: "line-runner", version: 1, exported, script, me, settings, progress }`. **Restore
-backup** replaces the script (after a confirm if one exists), merges settings, and merges
-progress, keeping whichever record of each line is newer. **Copy script text** puts the
+`{ app: "line-runner", version: 1, exported, script, me, settings, progress, log }`. **Restore
+backup** replaces the script (after a confirm if one exists), merges settings, merges
+progress, keeping whichever record of each line is newer, and merges the practice records from
+both devices in time order without duplicates. **Copy script text** puts the
 canonical text on the clipboard; pasting it into Add pages on another device rebuilds the same
 script.
 

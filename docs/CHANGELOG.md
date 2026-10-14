@@ -1,5 +1,14 @@
 # Changelog
 
+## 2026-10-13 — Practice record; tapped "Missed" fixed
+- **Practice record:** every graded try is logged on the device (line key, mode, grade, whether
+  Hint was used) and goes into backups. Each line's progress also counts hinted attempts. Settings
+  shows a one-line summary. See ARCHITECTURE "Stored state" and DECISIONS D14.
+- **Fix:** tapping **Missed** passed no grade (the button builder skipped a value of 0), so
+  tapped misses were left out of the summary and Drill these and never added to a line's miss
+  count. The box still dropped to 0. The keyboard shortcut was unaffected.
+- Help → Privacy now describes the practice record. Service worker cache `v4`.
+
 ## 2026-10-11 — `e9bd489` Documentation
 Added `docs/` (architecture, parser rules, decisions, changelog, roadmap), linked from the README.
 Every code comment and help example now uses the test play's names. Service worker cache `v3`.

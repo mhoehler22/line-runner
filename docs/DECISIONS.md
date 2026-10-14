@@ -88,3 +88,12 @@ the user's name and the play's title stay out. Notes about the real script live 
 repository in the project folder.
 **Lesson:** two character names slipped into code comments in the first public commits and were
 replaced. The release check is now a search of the repository for names before every push.
+
+## D14. Keep a practice record on the device.
+**Why:** progress per line (D6) says where a line stands, not how it got there. To learn
+whether a feature helps (a first-letter hint, a mode), each try is logged: line key, mode,
+grade, and whether a hint was used. It stays on the device like everything else (D1) and travels
+in the backup, which is how anyone looks at it. Keys, never text.
+**Cost:** storage grows with use (capped at 10,000 entries, roughly 0.7 MB). A hinted "Got it"
+still moves a line up a box, the same as an unaided one; whether it should is an open question
+(ROADMAP).
